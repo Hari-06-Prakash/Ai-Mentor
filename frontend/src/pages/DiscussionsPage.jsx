@@ -3,6 +3,7 @@ import Header from "../components/Header";
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../context/AuthContext";
 import { useSidebar } from "../context/SidebarContext";
+import { useTranslation } from "react-i18next";
 import {
   MessageCircle,
   ThumbsUp,
@@ -63,6 +64,14 @@ const GLOBAL_CATEGORIES = [
   "Off-Topic",
 ];
 
+const CATEGORY_KEY_MAP = {
+  "Course Discussion": "cat_course_discussion",
+  "General": "cat_general",
+  "Help & Support": "cat_help_support",
+  "Feedback": "cat_feedback",
+  "Off-Topic": "cat_off_topic",
+};
+
 const categoryColorMap = {
   "Course Discussion": "border-purple-500 text-purple-400",
   General: "border-blue-500 text-blue-400",
@@ -75,6 +84,8 @@ const categoryColorMap = {
 /*  MAIN COMPONENT                            */
 /* ────────────────────────────────────────── */
 const DiscussionsPage = () => {
+  const { t } = useTranslation();
+  const getCategoryLabel = (cat) => t(`discussions.${CATEGORY_KEY_MAP[cat]}`, cat);
   const { user } = useAuth();
   const { sidebarCollapsed } = useSidebar();
   const token = localStorage.getItem("token");
@@ -93,6 +104,8 @@ const DiscussionsPage = () => {
   const [panelLoading, setPanelLoading] = useState(false);
   const [panelSort, setPanelSort] = useState("Recent");
   const [panelReplyText, setPanelReplyText] = useState("");
+  const [panelReplyingTo, setPanelReplyingTo] = useState(null);
+  const [panelReplyInputText, setPanelReplyInputText] = useState("");
   const [allCourses, setAllCourses] = useState([]);
 
   /* ── global community state ── */
@@ -324,16 +337,15 @@ const DiscussionsPage = () => {
             <h1 className="text-3xl sm:text-5xl font-extrabold text-white">
               {activeView === "courseCommunity" ? (
                 <>
-                  Course <span className="text-yellow-400">Communities</span>
+                  {t("discussions.course_communities").split(" ")[0]}{" "}
+                  <span className="text-yellow-400">{t("discussions.course_communities").split(" ").slice(1).join(" ")}</span>
                 </>
               ) : (
-                <>
-                  Global <span className="text-orange-400">Discussions</span>
-                </>
+                <span className="text-orange-400">{t("discussions.global_title")}</span>
               )}
             </h1>
             <p className="text-teal-100 text-sm sm:text-base max-w-xl mx-auto">
-              Join discussions, share insights, and connect with others
+              {t("discussions.global_subtitle")}
             </p>
             {/* Tabs */}
             <div className="flex justify-center gap-3 pt-2">
@@ -345,7 +357,7 @@ const DiscussionsPage = () => {
                   }`}
               >
                 <BookOpen className="w-4 h-4" />
-                Course Communities
+                {t("discussions.course_communities")}
               </button>
               <button
                 onClick={() => setActiveView("global")}
@@ -355,7 +367,7 @@ const DiscussionsPage = () => {
                   }`}
               >
                 <Users className="w-4 h-4" />
-                Global
+                {t("discussions.global_btn")}
               </button>
             </div>
           </div>
@@ -372,7 +384,7 @@ const DiscussionsPage = () => {
                   <div className="flex items-center gap-2">
                     <MessageCircle className="w-5 h-5 text-indigo-500" />
                     <h2 className="text-xl font-bold text-main">
-                      Recent Discussions{" "}
+                      {t("discussions.recent")}{" "}
                       <span className="text-muted font-normal text-base">({coursePosts.length})</span>
                     </h2>
                   </div>
@@ -387,7 +399,7 @@ const DiscussionsPage = () => {
                           : "bg-card border border-border text-muted hover:text-main"
                           }`}
                       >
-                        {s}
+                        {s === "Recent" ? t("discussions.sort_recent") : t("discussions.sort_popular")}
                       </button>
                     ))}
                   </div>
@@ -395,10 +407,10 @@ const DiscussionsPage = () => {
 
                 {/* grid of discussion cards */}
                 {coursePostsLoading ? (
-                  <div className="text-center py-12 text-muted">Loading discussions...</div>
+                  <div className="text-center py-12 text-muted">{t("discussions.loading")}</div>
                 ) : coursePosts.length === 0 ? (
                   <div className="text-center py-12 text-muted">
-                    No course discussions yet. Click a course below to start one!
+                    {t("discussions.no_course")}
                     <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {allCourses.map((c) => (
                         <button
@@ -470,7 +482,7 @@ const DiscussionsPage = () => {
                     {/* quick-start: select a course to start new discussion */}
                     <div className="mt-8">
                       <h3 className="text-sm font-semibold text-muted mb-3 uppercase tracking-wide">
-                        Start a discussion in a course
+                        {t("discussions.start_in_course")}
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {allCourses.map((c) => (
@@ -494,7 +506,7 @@ const DiscussionsPage = () => {
               {selectedCourse && (
                 <div
                   ref={panelRef}
-                  className="fixed top-0 right-0 h-full w-full sm:w-100 bg-card border-l border-border shadow-2xl z-[50] flex flex-col"
+                  className="fixed top-18 right-0 h-[calc(100%-72px)] w-full sm:w-100 bg-card border-l border-border shadow-2xl z-50 flex flex-col"
                 >
                   {/* panel header */}
                   <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
@@ -535,7 +547,7 @@ const DiscussionsPage = () => {
                           }`}
                       >
                         {s === "Recent" ? <Clock className="w-3.5 h-3.5" /> : <TrendingUp className="w-3.5 h-3.5" />}
-                        {s}
+                        {s === "Recent" ? t("discussions.sort_recent") : t("discussions.sort_popular")}
                       </button>
                     ))}
                   </div>
@@ -543,10 +555,10 @@ const DiscussionsPage = () => {
                   {/* panel messages */}
                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
                     {panelLoading ? (
-                      <div className="text-center py-8 text-muted text-sm">Loading...</div>
+                      <div className="text-center py-8 text-muted text-sm">{t("common.loading")}</div>
                     ) : panelPosts.length === 0 ? (
                       <div className="text-center py-8 text-muted text-sm">
-                        No messages yet. Be the first to share!
+                        {t("discussions.no_messages")}
                       </div>
                     ) : (
                       panelPosts.map((post) => (
@@ -605,8 +617,73 @@ const DiscussionsPage = () => {
                                   <ThumbsDown className="w-3.5 h-3.5" />
                                   {post.dislikes?.length || 0}
                                 </button>
-                                <span className="hover:text-main cursor-pointer">Reply</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPanelReplyingTo(panelReplyingTo === post.id ? null : post.id);
+                                    setPanelReplyInputText("");
+                                  }}
+                                  className="hover:text-main cursor-pointer bg-transparent p-0 border-0"
+                                  aria-expanded={panelReplyingTo === post.id}
+                                  aria-controls={`panel-reply-${post.id}`}
+                                >
+                                  {t("discussions.reply")} ({post.replies?.length || 0})
+                                </button>
                               </div>
+
+                              {/* Reply Input */}
+                              {panelReplyingTo === post.id && (
+                                <div
+                                  className="mt-2 flex items-center gap-2"
+                                  id={`panel-reply-${post.id}`}
+                                >
+                                  <input
+                                    type="text"
+                                    placeholder="Write a reply..."
+                                    value={panelReplyInputText}
+                                    onChange={(e) => setPanelReplyInputText(e.target.value)}
+                                    onKeyDown={async (e) => {
+                                      if (e.key === "Enter" && !e.shiftKey) {
+                                        e.preventDefault();
+                                        const text = panelReplyInputText.trim();
+                                        if (!text) {
+                                          return;
+                                        }
+                                        try {
+                                          await handleReplySubmit(post.id, text, "panel");
+                                          setPanelReplyInputText("");
+                                          setPanelReplyingTo(null);
+                                        } catch (err) {
+                                          // Keep input/UI open so the user doesn't lose their text
+                                          console.error("Failed to submit reply from panel input:", err);
+                                        }
+                                      }
+                                    }}
+                                    className="flex-1 px-3 py-1.5 bg-input border border-border rounded-lg text-xs text-main placeholder-muted focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={async () => {
+                                      const text = panelReplyInputText.trim();
+                                      if (!text) {
+                                        return;
+                                      }
+                                      try {
+                                        await handleReplySubmit(post.id, text, "panel");
+                                        setPanelReplyInputText("");
+                                        setPanelReplyingTo(null);
+                                      } catch (err) {
+                                        // Keep input/UI open so the user doesn't lose their text
+                                        console.error("Failed to submit reply from panel button:", err);
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1"
+                                  >
+                                    <Send className="w-3 h-3" />
+                                    Reply
+                                  </button>
+                                </div>
+                              )}
 
                               {/* Replies */}
                               {post.replies?.length > 0 && (
@@ -646,7 +723,7 @@ const DiscussionsPage = () => {
                       <Smile className="w-5 h-5 text-muted shrink-0" />
                       <input
                         type="text"
-                        placeholder="Share your thoughts..."
+                        placeholder={t("discussions.share_thoughts")}
                         value={panelReplyText}
                         onChange={(e) => {
                           if (e.target.value.length <= 1000) setPanelReplyText(e.target.value);
@@ -664,7 +741,7 @@ const DiscussionsPage = () => {
                         className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5"
                       >
                         <Send className="w-3.5 h-3.5" />
-                        Send
+                        {t("discussions.send")}
                       </button>
                     </div>
                     <div className="text-right text-[11px] text-muted mt-1">
@@ -755,27 +832,27 @@ const DiscussionsPage = () => {
                       onChange={(e) => {
                         if (e.target.value.length <= 1000) setGlobalContent(e.target.value);
                       }}
-                      placeholder="What's on your mind? Share insights, ask questions, or start a discussion about courses..."
+                      placeholder={t("discussions.post_placeholder")}
                       rows={4}
                       className="flex-1 px-4 py-3 bg-input border border-border rounded-lg text-sm text-main placeholder-muted focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                     />
                   </div>
                   <div className="flex items-center justify-between mt-3 flex-wrap gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="relative">
+                     <div className="relative">
                         <select
                           value={globalCategory}
                           onChange={(e) => setGlobalCategory(e.target.value)}
-                          className="appearance-none pl-3 pr-8 py-2 bg-input border border-border rounded-lg text-sm text-muted focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                          className="appearance-none pl-4 pr-10 py-2 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white font-semibold rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer transition duration-300 ease-in-out" 
                         >
-                          <option value="">Select Category *</option>
+                          <option value="" className="bg-card text-main font-semibold">Select Category *</option>
                           {GLOBAL_CATEGORIES.map((c) => (
-                            <option key={c} value={c}>
+                            <option key={c} value={c} className="bg-card text-main font-semibold">
                               {c}
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="w-4 h-4 text-muted absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <ChevronDown className="w-4 h-4 text-white/80 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
                       <span
                         className={`text-sm ${globalContent.length > 900 ? "text-red-400" : "text-muted"
@@ -790,7 +867,7 @@ const DiscussionsPage = () => {
                       className="px-6 py-2.5 bg-linear-to-r from-orange-500 to-red-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Send className="w-4 h-4" />
-                      Post
+                      {t("discussions.post_btn")}
                     </button>
                   </div>
                 </form>
@@ -800,7 +877,7 @@ const DiscussionsPage = () => {
                   <div className="flex items-center gap-2">
                     <MessageCircle className="w-5 h-5 text-orange-500" />
                     <h2 className="text-xl font-bold text-main">
-                      Global Discussions{" "}
+                      {t("discussions.global_list")}{" "}
                       <span className="text-muted font-normal text-base">({globalPosts.length})</span>
                     </h2>
                   </div>
@@ -811,10 +888,10 @@ const DiscussionsPage = () => {
                         onChange={(e) => setGlobalCategoryFilter(e.target.value)}
                         className="appearance-none pl-3 pr-8 py-1.5 bg-card border border-border rounded-lg text-sm text-muted focus:outline-none cursor-pointer"
                       >
-                        <option>All Categories</option>
+                        <option>{t("discussions.all_categories")}</option>
                         {GLOBAL_CATEGORIES.map((c) => (
                           <option key={c} value={c}>
-                            {c}
+                            {getCategoryLabel(c)}
                           </option>
                         ))}
                       </select>
@@ -830,7 +907,7 @@ const DiscussionsPage = () => {
                           : "bg-card border border-border text-muted hover:text-main"
                           }`}
                       >
-                        {s}
+                        {s === "Recent" ? t("discussions.sort_recent") : t("discussions.sort_popular")}
                       </button>
                     ))}
                   </div>
@@ -838,10 +915,10 @@ const DiscussionsPage = () => {
 
                 {/* Global Posts */}
                 {globalLoading ? (
-                  <div className="text-center py-12 text-muted">Loading discussions...</div>
+                  <div className="text-center py-12 text-muted">{t("discussions.loading")}</div>
                 ) : globalPosts.length === 0 ? (
                   <div className="text-center py-12 text-muted">
-                    No global discussions yet. Be the first to start one!
+                    {t("discussions.no_global")}
                   </div>
                 ) : (
                   <div className="space-y-4">
