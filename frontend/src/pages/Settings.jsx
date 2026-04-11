@@ -41,8 +41,6 @@ export default function Settings() {
   });
 
   const [avatarFile, setAvatarFile] = useState(null);
-  const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed } =
-    useSidebar();
   const [activeSetting, setActiveSetting] = useState("profile");
   const { user, updateUser, fetchUserProfile } = useAuth();
   const [formData, setFormData] = useState({
